@@ -270,21 +270,6 @@ export function Onboarding() {
       </div>
 
       {!isOnArc && isConnected && (
-<<<<<<< HEAD
-        <div className="mt-4 p-3 rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/30 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-[var(--danger)]">
-              Wrong network. Switch to Arc Testnet to continue.
-            </span>
-            <button
-              onClick={handleAddAndSwitchToArc}
-              disabled={isSwitchPending}
-              className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              {isSwitchPending ? "Switching..." : "Switch to Arc Testnet"}
-            </button>
-          </div>
-=======
         <div className="mt-4 p-4 rounded-lg bg-danger/10 border border-danger/30 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
           <span className="text-xs text-danger">
             [WARN] Network mismatch. Handshake required with Arc Testnet.

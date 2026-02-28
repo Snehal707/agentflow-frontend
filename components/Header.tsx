@@ -85,24 +85,6 @@ export function Header({ showWallet = true }: HeaderProps) {
             </div>
           )}
 
-<<<<<<< HEAD
-        {isError && error && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--danger)]/20 border border-[var(--danger)]/50">
-            <span className="text-sm text-[var(--danger)] flex-1">
-              {error.message}
-            </span>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="px-3 py-1 text-sm font-medium rounded-md bg-[var(--danger)]/30 hover:bg-[var(--danger)]/50 transition-colors"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-        <ConnectButton />
-      </div>
-=======
           <ConnectButton.Custom>
             {({
               openConnectModal: openConnect,
