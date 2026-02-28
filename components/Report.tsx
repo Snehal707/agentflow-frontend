@@ -1,8 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
+function cleanReport(text: string): string {
+  return text
+    .split("\n")
+    .map((line) =>
+      line.startsWith("> ") ? line.slice(2) : line.startsWith(">") ? line.slice(1) : line,
+    )
+    .join("\n");
+}
+
 export function Report({ markdown }: { markdown?: string | null }) {
+  const [copied, setCopied] = useState(false);
+
   if (!markdown) {
     return (
       <div className="rounded-xl border border-white/5 p-8 text-center min-h-[200px] flex flex-col justify-center items-center bg-bg-secondary/40">
@@ -32,6 +44,18 @@ export function Report({ markdown }: { markdown?: string | null }) {
     );
   }
 
+  const cleaned = cleanReport(markdown);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-white/5 overflow-hidden bg-bg-secondary/40">
       <div className="bg-bg-tertiary border-b border-white/10 p-4 flex justify-between items-center font-mono">
@@ -39,9 +63,31 @@ export function Report({ markdown }: { markdown?: string | null }) {
           <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
           Final_Synthesis.md
         </h2>
-        <span className="text-[10px] text-platinum-muted">
-          ENCRYPTED // VERIFIED
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-medium uppercase tracking-wider border border-gold/40 text-gold hover:bg-gold/10 hover:border-gold/60 transition-colors"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              />
+            </svg>
+            {copied ? "Copied!" : "Copy Report"}
+          </button>
+          <span className="text-[10px] text-platinum-muted">
+            ENCRYPTED // VERIFIED
+          </span>
+        </div>
       </div>
       <div className="p-6 prose prose-luxury prose-invert prose-sm md:prose-base max-w-none max-h-[600px] overflow-auto">
         <ReactMarkdown
@@ -80,7 +126,7 @@ export function Report({ markdown }: { markdown?: string | null }) {
               </ul>
             ),
             li: ({ children }) => (
-              <li className="relative pl-4 before:content-['>'] before:absolute before:left-0 before:text-gold before:font-mono text-platinum/90">
+              <li className="relative pl-4 before:content-['▸'] before:absolute before:left-0 before:text-gold before:font-mono text-platinum/90">
                 {children}
               </li>
             ),
@@ -102,8 +148,34 @@ export function Report({ markdown }: { markdown?: string | null }) {
             ),
           }}
         >
-          {markdown}
+          {cleaned}
         </ReactMarkdown>
+      </div>
+      <div className="border-t border-white/10 p-4 bg-amber-500/10 border-l-4 border-amber-500/60 rounded-b-xl">
+        <p className="text-sm text-amber-200/95 flex items-start gap-2">
+          <span aria-hidden>⚠️</span>
+          <span>
+            AI-generated report. Financial figures may be outdated — verify with{" "}
+            <a
+              href="https://coinmarketcap.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold hover:text-gold-light underline underline-offset-2"
+            >
+              CoinMarketCap
+            </a>
+            ,{" "}
+            <a
+              href="https://www.coingecko.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold hover:text-gold-light underline underline-offset-2"
+            >
+              CoinGecko
+            </a>
+            , or other live sources before making decisions.
+          </span>
+        </p>
       </div>
     </div>
   );
