@@ -51,6 +51,15 @@ export function ChatSidebar({
       return;
     }
     const onPointerDown = (event: MouseEvent | PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element) {
+        // Do not close synchronously on primary nav links: setState on pointerdown can
+        // re-render before the link's click fires and break same-tab Next.js navigation
+        // (new tab / context-menu still works). History clears on route change unmount.
+        if (target.closest("nav a[href]")) {
+          return;
+        }
+      }
       const el = historyWrapRef.current;
       if (el && !el.contains(event.target as Node)) {
         setHistoryOpen(false);
@@ -71,7 +80,7 @@ export function ChatSidebar({
 
   return (
     <aside
-      className={`sticky top-0 hidden h-screen max-h-dvh min-h-0 shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/5 bg-black/40 backdrop-blur-3xl py-8 text-xs font-medium transition-[width,padding] duration-300 md:flex ${
+      className={`relative z-20 sticky top-0 hidden h-screen max-h-dvh min-h-0 shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-white/5 bg-black/40 backdrop-blur-3xl py-8 text-xs font-medium transition-[width,padding] duration-300 md:flex ${
         collapsed
           ? `${sidebarWidthClass.collapsed} px-3`
           : `${sidebarWidthClass.expanded} px-0`
