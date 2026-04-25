@@ -1,32 +1,15 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope, Space_Grotesk } from "next/font/google";
-import Script from "next/script";
+import { Manrope } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
 
-const manrope = Manrope({
+const bodyFont = Manrope({
   subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-mono",
-  display: "swap",
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
-  title: "AgentFlow – Autonomous AI agents. Instant payments. Zero gas.",
-  description:
-    "AgentFlow — Autonomous AI agents on Arc Testnet. Circle x402 · Hermes AI.",
+  title: "AgentFlow | Research, payments, and execution on Arc",
+  description: "AgentFlow brings research, swap, vault, bridge, portfolio, and AgentPay flows into one workspace on Arc.",
 };
 
 export default function RootLayout({
@@ -35,26 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${manrope.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
-    >
-      <body>
-        <Script
-          async
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Material Symbols is not available via next/font; ligature icons need this stylesheet. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
-          `}
-        </Script>
-        <Providers>{children}</Providers>
-      </body>
+      </head>
+      <body className={bodyFont.variable}>{children}</body>
     </html>
   );
 }
