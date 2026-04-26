@@ -32,3 +32,8 @@ frontend-runtime.err.log
 
 # vercel
 .vercel
+
+# Stitch / design exports (large; not for git)
+stitch_*.zip
+stitch_extracted/
+stitch_extracted2/
