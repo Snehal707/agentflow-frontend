@@ -63,6 +63,7 @@ export function useAgentJwt() {
       };
     }
 
+    setSession(existing);
     setLoading(true);
     setError(null);
     refreshSavedSession(existing)

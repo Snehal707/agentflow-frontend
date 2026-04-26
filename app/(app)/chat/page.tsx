@@ -9,15 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { formatUnits, getAddress } from "viem";
 import Link from "next/link";
-import { ChatPaymentPanel } from "@/components/chat/ChatPaymentPanel";
-import { ChatReportPanel } from "@/components/chat/ChatReportPanel";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
-import { ChatThread } from "@/components/chat/ChatThread";
 import { ChatTopNavbar } from "@/components/chat/ChatTopNavbar";
 import { PromptComposer } from "@/components/chat/PromptComposer";
 import type {
@@ -58,6 +56,19 @@ import {
 
 const HISTORY_STORAGE_KEY = "agentflow.chat.history";
 const ARC_EURC_ADDRESS = "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a" as const;
+
+const ChatPaymentPanel = dynamic(
+  () => import("@/components/chat/ChatPaymentPanel").then((mod) => mod.ChatPaymentPanel),
+  { ssr: false },
+);
+const ChatReportPanel = dynamic(
+  () => import("@/components/chat/ChatReportPanel").then((mod) => mod.ChatReportPanel),
+  { ssr: false },
+);
+const ChatThread = dynamic(
+  () => import("@/components/chat/ChatThread").then((mod) => mod.ChatThread),
+  { ssr: false },
+);
 
 function createChatSessionId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
