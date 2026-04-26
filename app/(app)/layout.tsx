@@ -1,4 +1,9 @@
-import { Providers } from "../providers";
+import dynamic from "next/dynamic";
+
+const Providers = dynamic(
+  () => import("../providers").then((m) => m.Providers),
+  { ssr: false },
+);
 
 export default function AppShellLayout({
   children,

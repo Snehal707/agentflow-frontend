@@ -66,6 +66,9 @@ function createChatSessionId(): string {
   return `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+/** Fixed string so server + first client pass match; real id set in useEffect. */
+const CHAT_SESSION_SSR_PLACEHOLDER = "chat-pending";
+
 const promptTabs = [
   "Research",
   "AgentPay",
@@ -1128,11 +1131,15 @@ function ChatPageInner() {
   const [input, setInput] = useState("");
   const [portfolioContext, setPortfolioContext] = useState<string | null>(null);
   const [portfolioWalletLabel, setPortfolioWalletLabel] = useState<string>("");
-  const [chatSessionId, setChatSessionId] = useState(() => createChatSessionId());
+  const [chatSessionId, setChatSessionId] = useState(CHAT_SESSION_SSR_PLACEHOLDER);
   const sessionId = useMemo(
     () => (address ? `wallet-${address.toLowerCase()}-${chatSessionId}` : chatSessionId),
     [address, chatSessionId],
   );
+
+  useEffect(() => {
+    setChatSessionId(createChatSessionId());
+  }, []);
   const [pendingAttachment, setPendingAttachment] = useState<PendingChatAttachment | null>(null);
   const [voicePaymentLabel, setVoicePaymentLabel] = useState<string | null>(null);
   const [messages, setMessages] = useState<LiveChatMessage[]>([]);
