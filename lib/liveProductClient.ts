@@ -223,6 +223,9 @@ export type PayContextResponse = {
   /** Circle DCW execution address on Arc (USDC send/receive). */
   userAgentWalletAddress: string;
   arc_handle: string | null;
+  /** On-chain AgentPayRegistry `.arc` name for the user's execution wallet. */
+  chain_arc_name?: string | null;
+  chain_arc_expires_at?: string | null;
 };
 
 export type PaySendResponse = {
@@ -438,6 +441,7 @@ export type WalletBalanceHolding = {
   contractAddress?: string | null;
   symbol?: string | null;
   balance?: number;
+  balanceFormatted?: string | number | null;
 };
 
 export type WalletBalanceResponse = {
@@ -462,7 +466,8 @@ export function pickUsdcBalance(holdings: WalletBalanceHolding[]): number | null
   let fromSymbol: number | null = null;
   let fromContract: number | null = null;
   for (const h of holdings) {
-    const bal = h.balance;
+    const rawBalance = h.balance ?? h.balanceFormatted;
+    const bal = typeof rawBalance === "number" ? rawBalance : Number(rawBalance);
     if (typeof bal !== "number" || !Number.isFinite(bal)) continue;
     const sym = (h.symbol || "").toUpperCase();
     if (sym === "USDC") {

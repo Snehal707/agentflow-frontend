@@ -185,6 +185,12 @@ export default function AgentPayPage() {
     try {
       const ctx = await fetchPayContext(headers);
       setPayContext(ctx);
+      if (ctx.chain_arc_name) {
+        setMyChainArc({
+          name: ctx.chain_arc_name,
+          expiresAt: ctx.chain_arc_expires_at ?? null,
+        });
+      }
     } catch {
       setPayContext(null);
     }
@@ -901,18 +907,24 @@ export default function AgentPayPage() {
     if (!address || !isAuthenticated || authLoading || balanceLoading) {
       return;
     }
-    if (dcwExecutionAddress) {
+    const needsExecutionAddress = !dcwExecutionAddress;
+    const needsBalance = !balanceInfo && !balanceLoading;
+    const needsArcName = !myChainArc?.name;
+
+    if (!needsExecutionAddress && !needsBalance && !needsArcName) {
       return;
     }
 
-    // Keep retrying while the receive panel has no execution wallet yet.
-    // This avoids a sticky empty state when first fetch happened during boot.
+    // Keep retrying missing receive-panel data so a transient boot/API failure
+    // cannot leave the QR visible while the .arc name or USDC balance stays blank.
     void loadContext();
-    void loadBalance();
+    if (needsBalance) void loadBalance();
+    if (needsArcName) void loadMyChainArc();
 
     const timer = window.setInterval(() => {
       void loadContext();
       void loadBalance();
+      void loadMyChainArc();
     }, 12000);
 
     return () => {
@@ -923,10 +935,13 @@ export default function AgentPayPage() {
     address,
     isAuthenticated,
     authLoading,
+    balanceInfo,
     balanceLoading,
     dcwExecutionAddress,
     loadContext,
     loadBalance,
+    loadMyChainArc,
+    myChainArc?.name,
   ]);
 
   const arcHandleTrimmed = payContext?.arc_handle?.trim() || "";
