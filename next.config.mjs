@@ -13,9 +13,18 @@ const __dirname = path.dirname(__filename);
 const monorepoRoot = path.resolve(__dirname, "..");
 loadEnvConfig(monorepoRoot);
 
+// distDir must NOT follow repo-root NODE_ENV. Root `.env` often sets
+// NODE_ENV=development for the API; that leaked into `next start` and made Next
+// look for a production build under `.next-dev`. Derive dev vs prod output from
+// how Next was invoked (npm lifecycle or CLI subcommand) instead.
+const npmLifecycle = process.env.npm_lifecycle_event || "";
+const nextCliSubcommand = process.argv[2];
+const useNextDevDist =
+  npmLifecycle === "dev" || nextCliSubcommand === "dev";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  distDir: useNextDevDist ? ".next-dev" : ".next",
   experimental: {
     optimizePackageImports: [
       "@rainbow-me/rainbowkit",
