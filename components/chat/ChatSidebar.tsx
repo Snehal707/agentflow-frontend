@@ -38,6 +38,7 @@ export function ChatSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const historyWrapRef = useRef<HTMLDivElement>(null);
 
   const handlePrimaryNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -54,10 +55,12 @@ export function ChatSidebar({
     }
 
     event.preventDefault();
+    setPendingHref(href);
     router.push(href);
   };
 
   useEffect(() => {
+    setPendingHref(null);
     for (const item of navItems) {
       if (item.href !== pathname) {
         router.prefetch(item.href);
@@ -159,6 +162,7 @@ export function ChatSidebar({
       <nav className={`flex-1 space-y-0.5 ${collapsed ? "px-2" : "px-4"}`}>
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const pending = pendingHref === item.href;
           const icon = navIconMap[item.href] ?? item.icon;
           return (
             <Link
@@ -167,7 +171,7 @@ export function ChatSidebar({
               onClick={(event) => handlePrimaryNavClick(event, item.href)}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-r-lg transition-all duration-300 ${
-                active
+                active || pending
                   ? "active-nav-glow text-[#f2ca50]"
                   : "text-white/40 hover:text-white/80 hover:bg-white/5 rounded-lg"
               } ${collapsed ? "justify-center px-0" : ""}`}
