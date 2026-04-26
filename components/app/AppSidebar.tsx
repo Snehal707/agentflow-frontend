@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { SidebarToggleButton } from "@/components/app/SidebarToggleButton";
@@ -61,13 +60,13 @@ export function AppSidebar({
       {/* New Session button */}
       {!collapsed && (
         <div className="px-6 mb-6">
-          <Link
+          <a
             href="/chat"
             className="w-full py-3 rounded-xl flex items-center justify-center gap-2.5 bg-surface-container-high/60 border border-white/5 text-on-surface text-[11px] font-bold uppercase tracking-widest hover:border-[#f2ca50]/40 hover:bg-surface-container-high transition-all duration-300 group"
           >
             <span className="material-symbols-outlined icon-standard group-hover:text-[#f2ca50] text-base">add</span>
             New Session
-          </Link>
+          </a>
         </div>
       )}
 
@@ -77,7 +76,7 @@ export function AppSidebar({
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const icon = navIconMap[item.href] ?? item.icon;
           return (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
@@ -97,7 +96,7 @@ export function AppSidebar({
                   {item.label}
                 </span>
               )}
-            </Link>
+            </a>
           );
         })}
       </nav>

@@ -1,8 +1,7 @@
 "use client";
 
-import { type MouseEvent, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { SidebarToggleButton } from "@/components/app/SidebarToggleButton";
 import { formatChatHistoryTime } from "@/lib/chatHistory";
@@ -36,37 +35,8 @@ export function ChatSidebar({
   onHistorySelect,
 }: ChatSidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const historyWrapRef = useRef<HTMLDivElement>(null);
-
-  const handlePrimaryNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      pathname === href
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    setPendingHref(href);
-    router.push(href);
-  };
-
-  useEffect(() => {
-    setPendingHref(null);
-    for (const item of navItems) {
-      if (item.href !== pathname) {
-        router.prefetch(item.href);
-      }
-    }
-  }, [pathname, router]);
 
   useEffect(() => {
     if (!collapsed) {
@@ -162,16 +132,14 @@ export function ChatSidebar({
       <nav className={`flex-1 space-y-0.5 ${collapsed ? "px-2" : "px-4"}`}>
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const pending = pendingHref === item.href;
           const icon = navIconMap[item.href] ?? item.icon;
           return (
-            <Link
+            <a
               key={item.href}
               href={item.href}
-              onClick={(event) => handlePrimaryNavClick(event, item.href)}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-r-lg transition-all duration-300 ${
-                active || pending
+                active
                   ? "active-nav-glow text-[#f2ca50]"
                   : "text-white/40 hover:text-white/80 hover:bg-white/5 rounded-lg"
               } ${collapsed ? "justify-center px-0" : ""}`}
@@ -186,7 +154,7 @@ export function ChatSidebar({
                   {item.label}
                 </span>
               )}
-            </Link>
+            </a>
           );
         })}
       </nav>
