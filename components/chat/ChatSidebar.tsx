@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { SidebarToggleButton } from "@/components/app/SidebarToggleButton";
 import { formatChatHistoryTime } from "@/lib/chatHistory";
@@ -36,8 +36,34 @@ export function ChatSidebar({
   onHistorySelect,
 }: ChatSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyWrapRef = useRef<HTMLDivElement>(null);
+
+  const handlePrimaryNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      pathname === href
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    router.push(href);
+  };
+
+  useEffect(() => {
+    for (const item of navItems) {
+      if (item.href !== pathname) {
+        router.prefetch(item.href);
+      }
+    }
+  }, [pathname, router]);
 
   useEffect(() => {
     if (!collapsed) {
@@ -138,6 +164,7 @@ export function ChatSidebar({
             <Link
               key={item.href}
               href={item.href}
+              onClick={(event) => handlePrimaryNavClick(event, item.href)}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-r-lg transition-all duration-300 ${
                 active
