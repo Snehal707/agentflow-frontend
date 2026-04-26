@@ -32,13 +32,6 @@ export function messageHasMeaningfulTrace(
 export function messageSupportsReportPanel(
   message: LiveChatMessage | null | undefined,
 ): boolean {
-  if (!message || message.role !== "assistant") {
-    return false;
-  }
-
-  return (
-    Boolean(message.reportMeta) ||
-    messageHasMeaningfulClusters(message) ||
-    messageHasMeaningfulTrace(message)
-  );
+  void message;
+  return false;
 }

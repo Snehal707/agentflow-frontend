@@ -47,7 +47,6 @@ import {
   bridgeTraceFromStreamEvent,
   traceEntriesFromBridgeResult,
 } from "@/lib/bridgeTrace";
-import { messageSupportsReportPanel } from "@/lib/chatInspector";
 import {
   executeEoaUsycPlan,
   preflightEoaUsycAction,
@@ -61,13 +60,12 @@ const ChatPaymentPanel = dynamic(
   () => import("@/components/chat/ChatPaymentPanel").then((mod) => mod.ChatPaymentPanel),
   { ssr: false },
 );
-const ChatReportPanel = dynamic(
-  () => import("@/components/chat/ChatReportPanel").then((mod) => mod.ChatReportPanel),
-  { ssr: false },
-);
 const ChatThread = dynamic(
   () => import("@/components/chat/ChatThread").then((mod) => mod.ChatThread),
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => <div className="min-h-0 flex-1" aria-hidden="true" />,
+  },
 );
 
 function createChatSessionId(): string {
@@ -75,6 +73,34 @@ function createChatSessionId(): string {
     return `chat-${crypto.randomUUID()}`;
   }
   return `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function QuickAgentPromptStrip({
+  disabled,
+  onSelect,
+}: {
+  disabled: boolean;
+  onSelect: (prompt: QuickAgentPrompt) => void;
+}) {
+  return (
+    <div
+      className="mx-auto mt-5 flex max-w-5xl flex-wrap justify-center gap-2.5"
+      aria-label="AgentFlow prompt starters"
+    >
+      {quickAgentPrompts.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          disabled={disabled}
+          onClick={() => onSelect(item)}
+          title={item.prompt}
+          className="min-h-11 rounded-full border border-white/10 bg-[#202020]/85 px-5 text-[11px] font-black uppercase tracking-[0.18em] text-white/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-[#f2ca50]/45 hover:bg-[#211f16] hover:text-[#f2ca50] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /** Fixed string so server + first client pass match; real id set in useEffect. */
@@ -89,6 +115,45 @@ const promptTabs = [
   "Portfolio",
 ] as const;
 type PromptTab = (typeof promptTabs)[number];
+
+type QuickAgentPrompt = {
+  label: string;
+  tab: PromptTab;
+  prompt: string;
+};
+
+const quickAgentPrompts: QuickAgentPrompt[] = [
+  {
+    label: "Agent Runs",
+    tab: "Research",
+    prompt: "Research Arc stablecoin payments today and write a concise sourced report.",
+  },
+  {
+    label: "AgentPay",
+    tab: "AgentPay",
+    prompt: "Show my contacts.",
+  },
+  {
+    label: "Swap USDC",
+    tab: "Swap",
+    prompt: "Swap 1 USDC to EURC.",
+  },
+  {
+    label: "Vault Yield",
+    tab: "Vault",
+    prompt: "What is the current AgentFlow Vault APY?",
+  },
+  {
+    label: "Bridge to Arc",
+    tab: "Bridge",
+    prompt: "Bridge 0.1 USDC from Ethereum Sepolia to Arc.",
+  },
+  {
+    label: "Portfolio Scan",
+    tab: "Portfolio",
+    prompt: "Show my portfolio.",
+  },
+];
 type ExecutionTarget = "EOA" | "DCW";
 type VaultAction =
   | "deposit"
@@ -1156,9 +1221,7 @@ function ChatPageInner() {
   const [messages, setMessages] = useState<LiveChatMessage[]>([]);
   const [recentChats, setRecentChats] = useState<ChatHistoryItem[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isReportPanelOpen, setIsReportPanelOpen] = useState(false);
   const [isPaymentPanelOpen, setIsPaymentPanelOpen] = useState(false);
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const previousWalletRef = useRef<string | null | undefined>(undefined);
   const [queuedResearchJobId, setQueuedResearchJobId] = useState<string | null>(null);
@@ -1169,13 +1232,6 @@ function ChatPageInner() {
     () => messages.filter((message) => message.role === "assistant"),
     [messages],
   );
-  const latestInspectableMessage = useMemo(
-    () =>
-      [...assistantMessages]
-        .reverse()
-        .find((message) => messageSupportsReportPanel(message)) ?? null,
-    [assistantMessages],
-  );
   const latestPaymentMessage = useMemo(
     () =>
       [...assistantMessages]
@@ -1183,22 +1239,7 @@ function ChatPageInner() {
         .find((message) => (message.paymentMeta?.entries?.length ?? 0) > 0) ?? null,
     [assistantMessages],
   );
-  const selectedReport = useMemo(
-    () =>
-      assistantMessages.find(
-        (message) =>
-          message.id === selectedReportId && messageSupportsReportPanel(message),
-      ) ||
-      (isReportPanelOpen ? latestInspectableMessage : null) ||
-      null,
-    [assistantMessages, isReportPanelOpen, latestInspectableMessage, selectedReportId],
-  );
-  const selectedPaymentMessage = useMemo(() => {
-    if (selectedReport?.paymentMeta?.entries?.length) {
-      return selectedReport;
-    }
-    return latestPaymentMessage;
-  }, [latestPaymentMessage, selectedReport]);
+  const selectedPaymentMessage = latestPaymentMessage;
   const contextItems = useMemo(
     () =>
       contextLabels.map((label) => ({
@@ -1357,33 +1398,12 @@ function ChatPageInner() {
     setInput("");
     setPendingAttachment(null);
     setVoicePaymentLabel(null);
-    setSelectedReportId(null);
-    setIsReportPanelOpen(false);
     setIsPaymentPanelOpen(false);
     setQueuedResearchJobId(null);
     setIsStreaming(false);
     setChatSessionId(createChatSessionId());
     previousWalletRef.current = currentWallet;
   }, [address]);
-
-  useEffect(() => {
-    const latestAssistant = assistantMessages.at(-1) ?? null;
-
-    if (!latestAssistant) {
-      setSelectedReportId(null);
-      setIsReportPanelOpen(false);
-      return;
-    }
-
-    if (messageSupportsReportPanel(latestAssistant)) {
-      setSelectedReportId(latestAssistant.id);
-      setIsReportPanelOpen(true);
-      return;
-    }
-
-    setSelectedReportId(null);
-    setIsReportPanelOpen(false);
-  }, [assistantMessages]);
 
   useEffect(() => {
     if (selectedPaymentMessage?.paymentMeta?.entries?.length) {
@@ -1431,13 +1451,18 @@ function ChatPageInner() {
     setInput("");
     setPendingAttachment(null);
     setVoicePaymentLabel(null);
-    setSelectedReportId(null);
-    setIsReportPanelOpen(false);
     setIsPaymentPanelOpen(false);
     setQueuedResearchJobId(null);
     setIsStreaming(false);
     setChatSessionId(createChatSessionId());
   };
+
+  const handleQuickAgentPrompt = useCallback((item: QuickAgentPrompt) => {
+    setSelectedTab(item.tab);
+    setInput(item.prompt);
+    setPendingAttachment(null);
+    setVoicePaymentLabel(null);
+  }, []);
 
   const handleStructuredConfirmation = async (input: {
     messageId: string;
@@ -2781,11 +2806,6 @@ function ChatPageInner() {
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <ChatThread
                   messages={messages}
-                  selectedAssistantId={selectedReport?.id ?? null}
-                  onSelectAssistant={(id) => {
-                    setSelectedReportId(id);
-                    setIsReportPanelOpen(true);
-                  }}
                   onSendMessage={(message) => {
                     void submitMessage(message, null);
                   }}
@@ -2793,7 +2813,7 @@ function ChatPageInner() {
                     void handleStructuredConfirmation(input);
                   }}
                 />
-                <div className="flex-shrink-0 border-t border-white/5 bg-[#0d0d0d]/60 px-6 pb-8 pt-5 xl:px-10">
+                <div className="sticky bottom-0 z-10 flex-shrink-0 border-t border-white/5 bg-[#0d0d0d]/90 px-4 pb-3 pt-3 backdrop-blur-xl xl:px-8">
                   {portfolioContext ? (
                     <div className="mb-3 flex items-center gap-2 rounded-lg bg-[#1c1b1b] px-3 py-2 text-xs">
                       <span aria-hidden>📊</span>
@@ -2832,15 +2852,15 @@ function ChatPageInner() {
                 </div>
               </div>
             ) : (
-              <div className="scrollbar-hide min-h-0 min-w-0 flex-1 overflow-y-auto">
-                <div className="mx-auto flex min-h-full max-w-5xl flex-col justify-center px-6 py-10 xl:px-10">
+              <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+                <div className="mx-auto flex h-full w-full max-w-5xl flex-col justify-center px-6 pb-[clamp(7rem,14vh,10rem)] pt-8 xl:px-10">
                   <div className="text-center">
                     <h1 className="font-headline text-[clamp(2.35rem,4.2vw,3.5rem)] font-black leading-[1] tracking-tight text-white">
                       How can I help today?
                     </h1>
                   </div>
 
-                  <div className="mt-[clamp(3.75rem,13vh,8rem)]">
+                  <div className="mt-[clamp(3rem,8vh,5.5rem)]">
                     {portfolioContext ? (
                       <div className="mb-3 flex items-center gap-2 rounded-lg bg-[#1c1b1b] px-3 py-2 text-xs">
                         <span aria-hidden>📊</span>
@@ -2875,6 +2895,10 @@ function ChatPageInner() {
                       voicePaymentLabel={voicePaymentLabel}
                       size="hero"
                     />
+                    <QuickAgentPromptStrip
+                      disabled={isStreaming}
+                      onSelect={handleQuickAgentPrompt}
+                    />
                   </div>
                 </div>
               </div>
@@ -2889,13 +2913,7 @@ function ChatPageInner() {
               onClose={() => setIsPaymentPanelOpen(false)}
               onOpen={() => setIsPaymentPanelOpen(true)}
             />
-          ) : (
-            <ChatReportPanel
-              message={selectedReport}
-              isOpen={isReportPanelOpen}
-              onClose={() => setIsReportPanelOpen(false)}
-            />
-          )}
+          ) : null}
         </div>
       </main>
     </main>

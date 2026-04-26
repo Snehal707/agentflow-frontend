@@ -212,7 +212,6 @@ export function PromptComposer({
   const valueRef = useRef(value);
   valueRef.current = value;
   const canSend = canSubmit ?? Boolean(value.trim());
-  const visibleDraft = value.trim();
 
   const refreshAudioInputDevices = useCallback(async () => {
     if (typeof window === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
@@ -738,14 +737,6 @@ export function PromptComposer({
         <p className="mx-auto mt-2 max-w-4xl px-2 text-left text-[11px] leading-snug text-[#9fb3c8]">
           {attachmentStatus}
         </p>
-      ) : null}
-
-      {visibleDraft ? (
-        <div className="mx-auto mt-2 flex max-w-4xl flex-wrap items-center gap-2 rounded-lg border border-[#f2ca50]/20 bg-[#14120b] px-3 py-2 text-[11px] text-white/70">
-          <span className="font-semibold text-[#f2ca50]">Draft</span>
-          <span className="min-w-0 flex-1 break-words text-white/85">{visibleDraft}</span>
-          <span className="text-white/40">Click ↑ to send</span>
-        </div>
       ) : null}
 
       {voicePaymentLabel ? (
